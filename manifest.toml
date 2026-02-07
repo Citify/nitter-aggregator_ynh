@@ -39,7 +39,7 @@ ram.runtime = "50M"
 [resources]
     [resources.sources.main]
     url = "https://github.com/Citify/nitter-aggregator/archive/refs/heads/main.tar.gz"
-    sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+    sha256 = "89eaf12a2331fb25f618f9e58163468c83c791aad40fb8fad70f0a4b0431c984"
     autoupdate.strategy = "latest_github_tag"
 
     [resources.system_user]
