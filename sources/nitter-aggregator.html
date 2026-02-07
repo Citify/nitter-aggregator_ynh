@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nitter Feed Aggregator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #15202b;
+            color: #ffffff;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #1a2634;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            border: 1px solid #38444d;
+            background-color: #253341;
+            color: #ffffff;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #1da1f2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background-color: #1a8cd8;
+        }
+        
+        button:disabled {
+            background-color: #38444d;
+            cursor: not-allowed;
+        }
+        
+        .account-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .account-tag {
+            background-color: #253341;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .account-tag button {
+            background: none;
+            border: none;
+            color: #8899a6;
+            cursor: pointer;
+            padding: 0;
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        .account-tag button:hover {
+            color: #ffffff;
+        }
+        
+        .status {
+            padding: 10px;
+            background-color: #253341;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #8899a6;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8899a6;
+        }
+        
+        .tweet {
+            background-color: #1a2634;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #38444d;
+        }
+        
+        .tweet-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        
+        .tweet-author {
+            font-weight: bold;
+            color: #ffffff;
+        }
+        
+        .tweet-username {
+            color: #8899a6;
+            font-size: 14px;
+        }
+        
+        .tweet-date {
+            color: #8899a6;
+            font-size: 13px;
+            margin-left: auto;
+        }
+        
+        .tweet-content {
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .tweet-link {
+            color: #1da1f2;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        
+        .tweet-link:hover {
+            text-decoration: underline;
+        }
+        
+        .error {
+            background-color: #3d1f1f;
+            color: #ff6b6b;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        
+        .settings-section {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #38444d;
+        }
+        
+        .settings-section label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #8899a6;
+            margin-bottom: 8px;
+        }
+        
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        input[type="number"] {
+            width: 80px;
+            padding: 6px;
+            border: 1px solid #38444d;
+            background-color: #253341;
+            color: #ffffff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐦 Nitter Feed Aggregator</h1>
+            
+            <div class="controls">
+                <input 
+                    type="text" 
+                    id="accountInput" 
+                    placeholder="Enter X/Twitter username (e.g., edatvoficial)"
+                    onkeypress="if(event.key==='Enter') addAccount()"
+                >
+                <button onclick="addAccount()">Add Account</button>
+                <button onclick="loadFeeds()" id="refreshBtn">Refresh Feeds</button>
+            </div>
+            
+            <div class="account-list" id="accountList"></div>
+            
+            <div class="settings-section">
+                <label>
+                    <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
+                    Auto-refresh every
+                    <input type="number" id="refreshInterval" value="5" min="1" max="60">
+                    minutes
+                </label>
+                <label>
+                    <input type="checkbox" id="showRetweets" checked onchange="loadFeeds()">
+                    Show retweets
+                </label>
+            </div>
+            
+            <div class="status" id="status">Add accounts above to get started</div>
+        </header>
+        
+        <div id="timeline"></div>
+    </div>
+
+    <script>
+        let accounts = [];
+        let tweets = [];
+        let autoRefreshInterval = null;
+        
+        // Load accounts from localStorage on page load
+        window.onload = function() {
+            const saved = localStorage.getItem('nitterAccounts');
+            if (saved) {
+                accounts = JSON.parse(saved);
+                updateAccountList();
+                if (accounts.length > 0) {
+                    loadFeeds();
+                }
+            }
+            
+            const autoRefreshSaved = localStorage.getItem('autoRefresh');
+            if (autoRefreshSaved === 'true') {
+                document.getElementById('autoRefresh').checked = true;
+                toggleAutoRefresh();
+            }
+            
+            const intervalSaved = localStorage.getItem('refreshInterval');
+            if (intervalSaved) {
+                document.getElementById('refreshInterval').value = intervalSaved;
+            }
+        };
+        
+        function addAccount() {
+            const input = document.getElementById('accountInput');
+            const username = input.value.trim().replace('@', '');
+            
+            if (!username) {
+                alert('Please enter a username');
+                return;
+            }
+            
+            if (accounts.includes(username)) {
+                alert('Account already added');
+                return;
+            }
+            
+            accounts.push(username);
+            saveAccounts();
+            updateAccountList();
+            input.value = '';
+            loadFeeds();
+        }
+        
+        function removeAccount(username) {
+            accounts = accounts.filter(acc => acc !== username);
+            saveAccounts();
+            updateAccountList();
+            loadFeeds();
+        }
+        
+        function saveAccounts() {
+            localStorage.setItem('nitterAccounts', JSON.stringify(accounts));
+        }
+        
+        function updateAccountList() {
+            const list = document.getElementById('accountList');
+            if (accounts.length === 0) {
+                list.innerHTML = '<div style="color: #8899a6; font-size: 13px;">No accounts added yet</div>';
+                return;
+            }
+            
+            list.innerHTML = accounts.map(acc => `
+                <div class="account-tag">
+                    @${acc}
+                    <button onclick="removeAccount('${acc}')" title="Remove">×</button>
+                </div>
+            `).join('');
+        }
+        
+        function toggleAutoRefresh() {
+            const checkbox = document.getElementById('autoRefresh');
+            const interval = parseInt(document.getElementById('refreshInterval').value);
+            
+            localStorage.setItem('autoRefresh', checkbox.checked);
+            localStorage.setItem('refreshInterval', interval);
+            
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+            
+            if (checkbox.checked) {
+                autoRefreshInterval = setInterval(loadFeeds, interval * 60 * 1000);
+                updateStatus(`Auto-refresh enabled (every ${interval} minutes)`);
+            } else {
+                updateStatus('Auto-refresh disabled');
+            }
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+        
+        async function loadFeeds() {
+            if (accounts.length === 0) {
+                updateStatus('Add accounts above to get started');
+                document.getElementById('timeline').innerHTML = '';
+                return;
+            }
+            
+            const btn = document.getElementById('refreshBtn');
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+            tweets = [];
+            
+            updateStatus(`Loading feeds from ${accounts.length} account(s)...`);
+            document.getElementById('timeline').innerHTML = '<div class="loading">Loading tweets...</div>';
+            
+            const promises = accounts.map(username => fetchNitterFeed(username));
+            const results = await Promise.allSettled(promises);
+            
+            results.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                    tweets = tweets.concat(result.value);
+                } else {
+                    console.error(`Failed to load ${accounts[index]}:`, result.reason);
+                }
+            });
+            
+            // Sort by date (newest first)
+            tweets.sort((a, b) => b.timestamp - a.timestamp);
+            
+            displayTweets();
+            
+            btn.disabled = false;
+            btn.textContent = 'Refresh Feeds';
+            updateStatus(`Loaded ${tweets.length} tweet(s) from ${accounts.length} account(s) • Last updated: ${new Date().toLocaleTimeString()}`);
+        }
+        
+        async function fetchNitterFeed(username) {
+            try {
+                // Use the proxy to avoid CORS issues
+                // Make sure nitter-proxy.php is in the same directory as this HTML file
+                const response = await fetch(`nitter-proxy.php?username=${encodeURIComponent(username)}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const html = await response.text();
+                return parseTweets(html, username);
+            } catch (error) {
+                console.error(`Error fetching ${username}:`, error);
+                return [];
+            }
+        }
+        
+        function parseTweets(html, username) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const tweetElements = doc.querySelectorAll('.timeline-item');
+            const parsedTweets = [];
+            
+            tweetElements.forEach(el => {
+                try {
+                    // Skip if it's a "show more" element
+                    if (el.querySelector('.show-more')) return;
+                    
+                    // Check if it's a retweet
+                    const isRetweet = el.querySelector('.retweet-header') !== null;
+                    
+                    const contentEl = el.querySelector('.tweet-content');
+                    const linkEl = el.querySelector('.tweet-link');
+                    const dateEl = el.querySelector('.tweet-date a');
+                    
+                    if (!contentEl || !linkEl) return;
+                    
+                    const content = contentEl.textContent.trim();
+                    const link = linkEl.getAttribute('href');
+                    const dateStr = dateEl ? dateEl.getAttribute('title') : '';
+                    
+                    // Parse date
+                    let timestamp = new Date();
+                    if (dateStr) {
+                        timestamp = new Date(dateStr);
+                    }
+                    
+                    parsedTweets.push({
+                        username: username,
+                        content: content,
+                        link: `https://nitter.net${link}`,
+                        timestamp: timestamp,
+                        dateStr: dateStr || timestamp.toISOString(),
+                        isRetweet: isRetweet
+                    });
+                } catch (err) {
+                    console.error('Error parsing tweet:', err);
+                }
+            });
+            
+            return parsedTweets;
+        }
+        
+        function displayTweets() {
+            const timeline = document.getElementById('timeline');
+            const showRetweets = document.getElementById('showRetweets').checked;
+            
+            const filteredTweets = showRetweets ? tweets : tweets.filter(t => !t.isRetweet);
+            
+            if (filteredTweets.length === 0) {
+                timeline.innerHTML = '<div class="loading">No tweets found</div>';
+                return;
+            }
+            
+            timeline.innerHTML = filteredTweets.map(tweet => {
+                const relativeTime = getRelativeTime(tweet.timestamp);
+                const retweetBadge = tweet.isRetweet ? '<span style="color: #8899a6; font-size: 12px;">🔄 Retweeted</span>' : '';
+                
+                return `
+                    <div class="tweet">
+                        <div class="tweet-header">
+                            <span class="tweet-author">@${tweet.username}</span>
+                            ${retweetBadge}
+                            <span class="tweet-date">${relativeTime}</span>
+                        </div>
+                        <div class="tweet-content">${escapeHtml(tweet.content)}</div>
+                        <a href="${tweet.link}" target="_blank" class="tweet-link">View on Nitter →</a>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function getRelativeTime(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            
+            return date.toLocaleDateString();
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
